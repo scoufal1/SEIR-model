@@ -9,10 +9,8 @@ public class SEIR {
     private int N; //total population
     private int latentPeriod; //average amount of time an individual is pre-infectious
     private int infectiousPeriod; //average amount of time an individual is infectious
-    //expected number of individuals that an infectious person would infect if 
-    //introduced into an entirely susceptible population.
-    private double R0;
-    private int baseline; //number of cases that are always present in the population
+    private double R0; //basic reproduction number
+    private int baseline; //cases not accounted for by model
     private int startDay; //when community transmission begins
     private int numberOfDays;
     //arrays to hold values for each day
@@ -22,6 +20,8 @@ public class SEIR {
     private double[] rec;
     private double[] forceInf;
     private double[] newInf;
+    private double f; //rate at which pre-infectious individuals become infectious
+    private double r; //rate at which individuals recover 
 
     //constructor
     public SEIR(int S, int E, int I, int R, int latentPeriod, int infectiousPeriod,
@@ -43,21 +43,16 @@ public class SEIR {
 	this.rec = new double[numberOfDays];
 	this.forceInf = new double[numberOfDays];
 	this.newInf = new double[numberOfDays];
+	this.f = 1.0 / latentPeriod;
+	this.r = 1.0 / infectiousPeriod;
 	setStartDay();
 	updateArrays();
+	boolean okay = okay();
+	if(!okay) {
+	    System.out.println("population check not okay");                         
+	}
     }
-    //risk that a susceptible person becomes infected between day d and d+1
-    private double forceOfInfection(double I) {
-	return (R0 * I)/(N * infectiousPeriod) ;
-    }
-    //rate at which pre-infectious individuals become infectious
-    private double f() {
-	return 1/(double)latentPeriod;
-    }
-    //rate at which individuals recover 
-    private double r() {
-	return 1/(double)infectiousPeriod;
-    }
+   
     //checks that S,E,I,R are in [0,population] and approximately add up to N
     private boolean okay() {
 	double population;
@@ -85,6 +80,11 @@ public class SEIR {
 	return check;
     }
 
+    //risk that a susceptible person becomes infected between day d and d+1
+    private double forceOfInfection(double I) {
+	return (R0 * I)/(N * infectiousPeriod);
+    }
+    
     //sets initial array values
     private void setStartDay() {
 	sus[0] = S;
@@ -95,42 +95,35 @@ public class SEIR {
 	newInf[0] = 0;
     }
 
-    //calculate S, E, I, R based on formulas
-    private double calcS(double S, double I) {
-	double force = forceOfInfection(I);
-	return S - (force * S);
-    }
-    private double calcE(double S, double E, double I) {
-	double force = forceOfInfection(I);
-	return E + (force * S) - (f() * E);
-    }
-    private double calcI(double E, double I) {
-	return I + (f() * E) - (r() * I);
-    }
-    private double calcR(double I, double R) {
-	return R + (r() * I);
-    }
     //updates the rest of ararys
     private void updateArrays() {
 	double S;
 	double E;
 	double I;
 	double R;
+	double force;
+	double force1;
+	double newlyExposed;
+	double newlyInfectious;
+	double newlyRecovered;
 	
 	for(int d = 1; d < numberOfDays; d++) {
 	    S = sus[d-1];
 	    E = exp[d-1];
 	    I = inf[d-1];
 	    R = rec[d-1];
-	    
-	    sus[d] = calcS(S, I);
-	    exp[d] = calcE(S, E, I);
-	    inf[d] = calcI(E, I);
-	    rec[d] = calcR(I, R);
-	    //inf[d] or I?
+	    force = forceInf[d-1];
+	   
+	    newlyExposed = force * S;
+	    newlyInfectious = f * E;
+	    newlyRecovered = r * I;
+
+	    sus[d] = S - newlyExposed;
+	    exp[d] = E + newlyExposed - newlyInfectious;
+	    inf[d] = I + newlyInfectious - newlyRecovered;
+	    rec[d] = R + newlyRecovered;
 	    forceInf[d] = forceOfInfection(inf[d]);
-	    //should this be forceInf[d] * sus[d]?
-	    newInf[d] = (forceInf[d-1] * S);
+	    newInf[d] = newlyExposed + baseline;
 	}
     }
 
