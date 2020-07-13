@@ -7,8 +7,8 @@ public class SEIR {
     private int I; //infected
     private int R; //recovered
     private int N; //total population
-    private int latentPeriod; //average amount of time an individual is pre-infectious
-    private int infectiousPeriod; //average amount of time an individual is infectious
+    private double latentPeriod; //average amount of time an individual is pre-infectious
+    private double infectiousPeriod; //average amount of time an individual is infectious
     private double R0; //basic reproduction number
     private int baseline; //cases not accounted for by model
     private int startDay; //when community transmission begins
@@ -24,7 +24,7 @@ public class SEIR {
     private double r; //rate at which individuals recover 
 
     //constructor
-    public SEIR(int S, int E, int I, int R, int latentPeriod, int infectiousPeriod,
+    public SEIR(int S, int E, int I, int R, double latentPeriod, double infectiousPeriod,
 		double R0, int baseline, int startDay, int numberOfDays) {
 	this.S = S;
 	this.E = E;
@@ -92,7 +92,7 @@ public class SEIR {
 	inf[0] = I;
 	rec[0] = R;
 	forceInf[0] = forceOfInfection(I);
-	newInf[0] = 0;
+	newInf[0] = baseline;
     }
 
     //updates the rest of ararys
@@ -102,7 +102,6 @@ public class SEIR {
 	double I;
 	double R;
 	double force;
-	double force1;
 	double newlyExposed;
 	double newlyInfectious;
 	double newlyRecovered;
@@ -126,14 +125,21 @@ public class SEIR {
 	    newInf[d] = newlyExposed + baseline;
 	}
     }
-
-    public double newInfections(int day){
-	int i = day - startDay;
-	return newInf[i];
+    public int numberOfDays() {
+	return numberOfDays;
     }
-    public double infectious(int day){
-	int i = day - startDay;
-	return inf[i];
+    public double newInfections(int day){
+	//int i = day - startDay;
+	//return newInf[i];
+	return newInf[day];
+    }
+    public double totalInfections(int start, int end) {
+	double sum = 0;
+	//should this be inclusive or exclusive?
+	for(int i = (start - startDay); i <= (end - startDay); i++) {
+	    sum += newInf[i];
+	}
+	return sum;
     }
 }
 
