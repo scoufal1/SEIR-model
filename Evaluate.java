@@ -71,14 +71,11 @@ public class Evaluate {
 	double logProbData = 0;
 	double prob;
 	for(int day = start; day < end; day++) {
-	    //first day of deaths (should be 4?)
-	    //since prob of death is 0 before this day, this causes variance to be 0
-	    //resulting in 1/0 for probability calculation
-	    if(day < 5) {
-	    	day = 5;
+	    //variance must be greater than 0 bc sigma = 0 causes error
+	    if(variances[day] > 0) {
+		prob = probOfDeaths(data.deaths(day), means[day], variances[day]);
+		logProbData += Math.log(prob);
 	    }
-	    prob = probOfDeaths(data.deaths(day), means[day], variances[day]);
-	    logProbData += Math.log(prob);
 	}
 	return logProbData;
     }
