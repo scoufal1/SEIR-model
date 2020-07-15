@@ -133,6 +133,7 @@ public class SEIR {
 	//return newInf[i];
 	return newInf[day];
     }
+    
     public double totalInfections(int start, int end) {
 	double sum = 0;
 	//should this be inclusive or exclusive?

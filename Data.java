@@ -6,8 +6,19 @@ public class Data {
     public static final int DATE = 0;
     private int numDays;
     private ArrayList<String> dates = new ArrayList<>();
+    //need to update methods to add cases info
     private ArrayList<Integer> cases = new ArrayList<>();
-    private ArrayList<Integer> deaths = new ArrayList<>();
+    private ArrayList<Double> deaths = new ArrayList<>();
+
+    public Data(double[] means) {
+	for(int i = 0; i < means.length; i++) {
+	    deaths.add(means[i]);
+	    numDays++;
+	}
+    }
+    public ArrayList<Double> getData() {
+	return deaths;
+    }
     
     public Data(String fileName, String columnName, boolean cumulative) throws FileNotFoundException {
 	Scanner fileInput = new Scanner(new File(fileName));
@@ -21,10 +32,10 @@ public class Data {
 	}
 	String line;
 	String[] tokens;
-	int deathCount;
-	int prevCount;
+	double deathCount;
+	double prevCount;
 	ArrayList<Integer> cumulativeCases = new ArrayList<>();
-	ArrayList<Integer> cumulativeDeaths = new ArrayList<>();
+	ArrayList<Double> cumulativeDeaths = new ArrayList<>();
 	while(fileInput.hasNextLine()) {
 	    line = fileInput.nextLine();
 	    tokens = line.split(",");
@@ -53,7 +64,7 @@ public class Data {
     }
     
     //returns the number of deaths on day starting from zero
-    public int deaths(int day) {
+    public double deaths(int day) {
 	return deaths.get(day);
     }
     
@@ -65,8 +76,8 @@ public class Data {
     
     //returns the total number of deaths from days start (inclusive) to
     //end (exclusive).
-    public int totalDeaths(int start, int end) {
-	int sum = 0;
+    public double totalDeaths(int start, int end) {
+	double sum = 0;
 	for(int i = start; i < end; i++) {
 	    sum += deaths.get(i);
 	}

@@ -1,5 +1,7 @@
-public class Evaluate {
+import org.apache.commons.math3.distribution.NormalDistribution;
 
+public class Evaluate {
+    
     static double[] dailyProbOfDeathGivenDeathFromCovid = {
 	0.0000, 0.0000, 0.0000, 0.0000, 0.0006, 0.0013, 0.0025, 0.0051,
 	0.0076, 0.0101, 0.0139, 0.0177, 0.0215, 0.0266, 0.0304, 0.0341,
@@ -10,7 +12,7 @@ public class Evaluate {
 	0.0035, 0.0028, 0.0025, 0.0023, 0.0021, 0.0020, 0.0019, 0.0016,
 	0.0014, 0.0013, 0.0011, 0.0010, 0.0010
     };
-
+    
     static double probOfDeathGivenDeathFromCovid(int patientDay) {
 	return dailyProbOfDeathGivenDeathFromCovid[patientDay];
     }
@@ -54,16 +56,9 @@ public class Evaluate {
     
     // This computes Gaussian(numberOfDeaths,mean,variance):
     static double probOfDeaths(double numberOfDeaths, double mean, double variance) {
-	//what to do if variance == 0???
-	if(variance == 0) {
-	    //temp fix so that return is not NaN
-	    return 0.000001;
-	}
 	double sigma = Math.sqrt(variance);
-	double a = 1/(sigma * Math.sqrt(2 * Math.PI));
-        double exp = -0.5*Math.pow(((numberOfDeaths-mean)/sigma), 2);
-	double b = Math.pow(Math.E, exp);
-	double result = a*b;
+	NormalDistribution nd = new NormalDistribution(mean,sigma);
+	double result = nd.probability(numberOfDeaths-0.5, numberOfDeaths+0.5);
 	return result;
     }
     
@@ -76,6 +71,12 @@ public class Evaluate {
 	double logProbData = 0;
 	double prob;
 	for(int day = start; day < end; day++) {
+	    //first day of deaths (should be 4?)
+	    //since prob of death is 0 before this day, this causes variance to be 0
+	    //resulting in 1/0 for probability calculation
+	    if(day < 5) {
+	    	day = 5;
+	    }
 	    prob = probOfDeaths(data.deaths(day), means[day], variances[day]);
 	    logProbData += Math.log(prob);
 	}
