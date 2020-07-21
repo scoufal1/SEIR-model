@@ -22,14 +22,14 @@ public class Evaluate {
     }
     // Calc mean expected deaths for each day
     // μ(d) = ∑ NI(j)δθ(d − j)
-    static double[] means(SEIR seir, double deathRate) {
+    static double[] means(SEIR seir, double ifr) {
 	int numDays = seir.numberOfDays();
 	double[] means = new double[numDays];
 	double probDeath;
 	for(int day = 0; day < numDays; day++) {
 	    for(int patientDay = 0; patientDay < maximumDurationOfCovid(); patientDay++) {
 		if(day+patientDay < numDays) {
-		    probDeath = deathRate * probOfDeathGivenDeathFromCovid(patientDay);
+		    probDeath = ifr * probOfDeathGivenDeathFromCovid(patientDay);
 		    means[day+patientDay]+=seir.newInfections(day)*probDeath;
 		}
 	    }
@@ -39,14 +39,14 @@ public class Evaluate {
 
     // Calc variance expected deaths for each day
     // σ^2(d) = ∑ NI(j)δθ(d − j)(1-δθ(d − j))
-    static double[] variances(SEIR seir, double deathRate) {
+    static double[] variances(SEIR seir, double ifr) {
 	int numDays = seir.numberOfDays();
 	double[] variances = new double[numDays];
 	double probDeath;
 	for(int day = 0; day < numDays; day++) {
 	    for(int patientDay = 0; patientDay < maximumDurationOfCovid(); patientDay++) {
 		if(day+patientDay < numDays) {
-		    probDeath = deathRate * probOfDeathGivenDeathFromCovid(patientDay);
+		    probDeath = ifr * probOfDeathGivenDeathFromCovid(patientDay);
 		    variances[day+patientDay]+=seir.newInfections(day)*probDeath*(1-probDeath);
 		}
 	    }
@@ -65,9 +65,9 @@ public class Evaluate {
     // This computes the probability of death for each day in
     // [start,end) and returns the sum of their logarithms.
     // Computed in log form to avoid underflow
-    static double logProbOfData(SEIR seir, Data data, double deathRate, int start, int end) {
-	double[] means = means(seir, deathRate);
-	double[] variances = variances(seir, deathRate);
+    static double logProbOfData(SEIR seir, Data data, double ifr, int start, int end) {
+	double[] means = means(seir, ifr);
+	double[] variances = variances(seir, ifr);
 	double logProbData = 0;
 	double prob;
 	for(int day = start; day < end; day++) {

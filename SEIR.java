@@ -55,7 +55,7 @@ public class SEIR {
    
     //checks that S,E,I,R are in [0,population] and approximately add up to N
     private boolean okay() {
-	double population;
+	double population=0;
 	boolean check = true;
 	for(int i = 0; i < numberOfDays; i++) {
 	    population = sus[i] + exp[i] + inf[i] + rec[i];
@@ -112,7 +112,6 @@ public class SEIR {
 	    I = inf[d-1];
 	    R = rec[d-1];
 	    force = forceInf[d-1];
-	   
 	    newlyExposed = force * S;
 	    newlyInfectious = f * E;
 	    newlyRecovered = r * I;
@@ -142,5 +141,20 @@ public class SEIR {
 	}
 	return sum;
     }
+
+    public void info() {
+	System.out.println("Susceptible: " + S);
+	System.out.println("Exposed: " + E);
+	System.out.println("Infectious: " + I);
+	System.out.println("Recovered: " + R);
+	System.out.println("Population: " + N);
+	System.out.println("Latent Period: " + latentPeriod);
+	System.out.println("Infectious Period: " + infectiousPeriod);
+	System.out.println("R0: " + R0);
+	System.out.println("Baseline: " + baseline);
+	System.out.println("Start Day: " + startDay);
+	System.out.println("Number of Days: " + numberOfDays);
+    }
+	
 }
 
