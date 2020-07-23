@@ -45,15 +45,12 @@ public class Data {
 	    line = fileInput.nextLine();
 	    tokens = line.split(",");
 	    dates.add(tokens[DATE]);
-	    //end loop if value is undefined or empty
-	    try {
-		caseCount = Double.parseDouble(tokens[casesIndex]);
-		deathCount = Double.parseDouble(tokens[deathsIndex]);
-	    } catch (NumberFormatException e) {
-		break;
-	    } catch (ArrayIndexOutOfBoundsException e) {
+	    //end loop if value is NaN
+	    if(tokens[deathsIndex].equals("NaN")) {
 		break;
 	    }
+	    caseCount = Double.parseDouble(tokens[casesIndex]);
+	    deathCount = Double.parseDouble(tokens[deathsIndex]);
 	    if(cumulative) {
 		cumulativeCases.add(caseCount);
 		cumulativeDeaths.add(deathCount);

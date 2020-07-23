@@ -1,5 +1,3 @@
-import org.apache.commons.math3.distribution.NormalDistribution;
-
 public class Evaluate {
     
     static double[] dailyProbOfDeathGivenDeathFromCovid = {
@@ -57,9 +55,19 @@ public class Evaluate {
     // This computes Gaussian(numberOfDeaths,mean,variance):
     static double probOfDeaths(double numberOfDeaths, double mean, double variance) {
 	double sigma = Math.sqrt(variance);
-	NormalDistribution nd = new NormalDistribution(mean,sigma);
-	double result = nd.probability(numberOfDeaths-0.5, numberOfDeaths+0.5);
-	return result;
+	double logresult = logCDF(numberOfDeaths, mean, sigma);
+
+	return logresult;
+    }
+
+    static double logCDF(double numberOfDeaths, double mean, double sigma) {
+	double x = (numberOfDeaths-mean)/sigma;
+	return Math.log(1/sigma)+logPhi(x);
+    }
+
+    //log of standard normal pdf
+    static double logPhi(double x) {
+	return Math.log(1/(Math.pow(2*Math.PI, 0.5)))-0.5*Math.pow(x,2);
     }
     
     // This computes the probability of death for each day in
@@ -74,7 +82,8 @@ public class Evaluate {
 	    //variance must be greater than 0 bc sigma = 0 causes error
 	    if(variances[day] > 0) {
 		prob = probOfDeaths(data.deaths(day), means[day], variances[day]);
-		logProbData += Math.log(prob);
+		//logProbData += Math.log(prob);
+		logProbData += prob;
 	    }
 	}
 	return logProbData;
