@@ -1,8 +1,22 @@
 import java.io.*;
 
 public class IFR {
+    //constants to indicate the various command line flags
+    public static final String FILE = "-f"; //input file name
+    public static final String CUMULATIVE = "-c"; //boolean indicating that file has cumulative counts
+    public static final String CASES_COLUMN = "-case"; //column name of file for case counts
+    public static final String DEATHS_COLUMN = "-death"; //column name of file for death counts
+    public static final String MIN_IFR = "-min"; //minimum IFR value
+    public static final String MAX_IFR = "-max"; //maximum IFR value
+    public static final String NUM_MODELS = "-m"; //number of models
+    public static final String NUM_IFR = "-i"; //number of IFRs
+    public static final String START = "-s"; //start day
+    public static final String END = "-e"; //end day
+    
+    //ranges of possible SEIR parameters
     static double MIN_FRACTION_SUSCEPTIBLE = 0.9 ;
     static double MAX_FRACTION_SUSCEPTIBLE = 1.0 ;
+    static int POPULATION = 250000;
     static int MIN_EXPOSED = 0 ;
     static int MAX_EXPOSED = 10 ;
     static int MIN_INFECTED = 0 ;
@@ -17,36 +31,77 @@ public class IFR {
     static int MAX_BASELINE = 100 ;
     static int MIN_START_DAY = 0 ;
     static int MAX_START_DAY = 60 ;
+    
 
     public static void main(String[] args) throws FileNotFoundException {
-        String fileName;
-	String casesColumnName;
-	String deathsColumnName;
-	boolean cumulative;
-	//update to get from command line
-	//Data data = new Data(fileName, casesColumnName, deathsColumnName, cumulative);
-	Data data = new Data("nyc-date-cases-hospitalizations-deaths.csv", "CASES", "DEATHS", false);
+	
+	String fileName = "";
+	boolean cumulative = false;
+	String deathsColumn = "";
+	String casesColumn = "";
+	double minIFR = 0;
+	double maxIFR = 0;
+	int numModels = 0;
+	int numIFR = 0;
+	int start = 0;
+	int end = 0;
+
+	//get inputs from command line
+	for (int i = 0; i < args.length; i++) {
+	    if (args[i].equals(FILE)) {
+		fileName = args[i+1];
+		i++;
+	    } else if (args[i].equals(CUMULATIVE)) {
+		cumulative = true;
+	    } else if (args[i].equals(CASES_COLUMN)) {
+		casesColumn = args[i+1];
+		i++;
+	    } else if (args[i].equals(DEATHS_COLUMN)) {
+		deathsColumn = args[i+1];
+		i++;
+	    } else if (args[i].equals(MIN_IFR)) {
+		minIFR = Double.parseDouble(args[i+1]);
+		i++;
+	    } else if (args[i].equals(MAX_IFR)) {
+		maxIFR = Double.parseDouble(args[i+1]);
+		i++;
+	    } else if (args[i].equals(NUM_MODELS)) {
+		numModels = Integer.parseInt(args[i+1]);
+		i++;
+	    } else if (args[i].equals(NUM_IFR)) {
+		numIFR = Integer.parseInt(args[i+1]);
+		i++;
+	    } else if (args[i].equals(START)) {
+		start = Integer.parseInt(args[i+1]);
+		i++;
+	    } else if (args[i].equals(END)) {
+		end = Integer.parseInt(args[i+1]);
+		i++;
+	    }
+	}
+
+	//read file and make data object
+	Data data = new Data(fileName, casesColumn, deathsColumn, cumulative);
 	int numDays = data.numberOfDays();
-	double MIN_IFR = 0.01;
-	double MAX_IFR = 0.05;
-	int numIFR = 10;
-	//min inclusive, max exclusive
-	double increment = (MAX_IFR - MIN_IFR)/numIFR;
+	
+	//prevent index out of bound error in evaluate
+	if(end > numDays) {
+	    end = numDays;
+	}
+      
+	//ifrValue contains discrete range of IFR values within given range
+	double increment = (maxIFR - minIFR)/numIFR; //min inclusive, max exclusive
 	double[] ifrValue = new double[numIFR];
 
-	double value = MIN_IFR;
+	double value = minIFR;
 	for(int i = 0; i < numIFR; i++) {
 	    ifrValue[i] = value;
 	    value += increment;
 	}
-
-	int numModels = 10;
-	int start = 0;
-	int end = numDays;
 	
 	SEIR seir;
 	double frac_sus;
-	int population =1000;
+	int population = POPULATION;
 	int sus;
 	int exp;
 	int inf;
@@ -56,7 +111,8 @@ public class IFR {
 	double R0;
 	int baseline;
 	int startDay;
-	
+
+	//ifr contains probabilities of IFR values, indices corresponding with ifrValue array
 	LNumber[] ifr = new LNumber[numIFR];
 	//initilize values to 0
 	for(int j = 0; j < numIFR; j++) {
@@ -67,6 +123,7 @@ public class IFR {
 	
 	for(int i = 0; i < numIFR; i++) {
 	    for(int n = 0; n < numModels; n++) {
+		//generate random parameters within given ranges
 		frac_sus = genRandomDouble(MIN_FRACTION_SUSCEPTIBLE, MAX_FRACTION_SUSCEPTIBLE);
 		sus = (int)(frac_sus * population);
 		exp = genRandomInt(MIN_EXPOSED, MAX_EXPOSED);
@@ -81,6 +138,7 @@ public class IFR {
 		seir = new SEIR(sus, exp, inf, rec, latentPer, infectPer, R0, baseline, 0, numDays);
 		result = Evaluate.logProbOfData(seir, data, ifrValue[i], start, end);
 		prob = new LNumber(result, true);
+		//sum probability of IFR over all models
 		ifr[i] = ifr[i].add(prob);
 	    }
 	    //divide sum of probabilities for each IFR by number of models
@@ -107,9 +165,7 @@ public class IFR {
 	return min + (Math.random() * (max-min));
     }
     
-    //should include max or not?
     public static int genRandomInt(int min, int max) {
 	return min + (int)(Math.random() * (max-min));
     }
-    
 }
